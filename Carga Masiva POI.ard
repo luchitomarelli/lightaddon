@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Archivo de registro del add-on (.ard).
+  Sirve para registrar el add-on en SAP B1 (Administracion > Gestion de Add-Ons).
+  Cuando compiles en Release, SAP B1 Studio puede regenerar este archivo con la
+  firma (Sig) correcta del .exe. Este es solo un ejemplo basico de referencia.
+-->
+<AddOnRegData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+              SlientInstallation="No" SlientUpgrade="No"
+              Partnernmsp="Carga Masiva POI" SchemaVersion="3.0"
+              MultipleVersion="false"
+              ExtName="Carga Masiva POI" ExtVersion="1.0.0"
+              Contdata="Tu Empresa" Partner="XX" DBType="Both" ClientType="A">
+  <Validity>
+    <SBOCompatibility>
+      <Version From="10" To="10" />
+    </SBOCompatibility>
+  </Validity>
+  <Addons>
+    <Addon Name="Carga Masiva POI">
+      <x86 AddonExe="CargaMasivaPOI.exe" ExeDir="X86Client">
+        <Installation>
+          <Files>
+            <File FileName="X86Client\CargaMasivaPOI.exe" />
+          </Files>
+        </Installation>
+      </x86>
+    </Addon>
+  </Addons>
+</AddOnRegData>

@@ -1,0 +1,9 @@
+# Build
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+.vs/
+
+# Logs generados por el addon
+PuntosEmision_Log.txt
