@@ -8,11 +8,12 @@ namespace CargaMasivaPOI
     /// <summary>
     /// Lee el archivo CSV y lo convierte en una lista de PuntoEmision.
     ///
-    /// Formato esperado (separado por ";", con encabezado en la primer linea):
+    /// Formato esperado (separado por ";", con encabezado en la primer linea).
+    /// La 3er columna (NumeroEmision) es OPCIONAL:
     ///
-    ///     Codigo;Descripcion;NumeroEmision
-    ///     0001;Casa Central - Facturacion A;15
-    ///     0002;Sucursal Norte - Facturacion B;48
+    ///     Codigo;Descripcion
+    ///     0001;Casa Central - Facturacion A
+    ///     0002;Sucursal Norte - Facturacion B
     ///
     /// Es C# puro: nada de SDK de SAP aca. Por eso esta parte es la mas facil.
     /// </summary>
@@ -36,9 +37,9 @@ namespace CargaMasivaPOI
                     continue; // saltar lineas vacias
 
                 string[] campos = linea.Split(Separador);
-                if (campos.Length < 3)
+                if (campos.Length < 2)
                     throw new FormatException(
-                        "La linea " + (i + 1) + " no tiene las 3 columnas esperadas: " + linea);
+                        "La linea " + (i + 1) + " no tiene al menos 2 columnas (Codigo;Descripcion): " + linea);
 
                 var punto = new PuntoEmision
                 {
@@ -46,12 +47,16 @@ namespace CargaMasivaPOI
                     Descripcion = campos[1].Trim()
                 };
 
-                int numero;
-                if (!int.TryParse(campos[2].Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out numero))
-                    throw new FormatException(
-                        "El numero de emision de la linea " + (i + 1) + " no es valido: '" + campos[2] + "'");
+                // 3er columna (numero de emision) es opcional.
+                if (campos.Length >= 3 && campos[2].Trim().Length > 0)
+                {
+                    int numero;
+                    if (!int.TryParse(campos[2].Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out numero))
+                        throw new FormatException(
+                            "El numero de emision de la linea " + (i + 1) + " no es valido: '" + campos[2] + "'");
+                    punto.NumeroEmision = numero;
+                }
 
-                punto.NumeroEmision = numero;
                 resultado.Add(punto);
             }
 

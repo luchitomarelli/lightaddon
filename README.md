@@ -16,10 +16,14 @@ Está inspirado en el addon original "Carga Masiva POI", pero acá:
 
 1. Agrega un menú en **Módulos → Carga Masiva POI...**.
 2. Al hacer clic, te deja elegir un archivo **CSV**.
-3. Lee el CSV (`Código ; Descripción ; NúmeroEmisión`).
-4. Crea (si no existe) la tabla de usuario `@POI_PEMISION` con el campo `U_NroEmision`.
-5. Inserta / actualiza cada punto de emisión vía **DI API**.
-6. Deja un **log** (`PuntosEmision_Log.txt`) y muestra el resumen *Exitosos / Fallidos*.
+3. Lee el CSV (`Código ; Descripción` — la 3er columna `NúmeroEmisión` es opcional).
+4. Toma la pantalla de **Puntos de Emisión** que tenés abierta y **escribe los datos
+   en su matriz** (Item `3`, columnas `Code` y `Desc`), igual que si los cargaras a mano.
+5. Aprieta "Agregar/Actualizar" para que **SAP guarde** (no hace un INSERT directo).
+6. Deja un **log** (`PuntosEmision_Log.txt`) y muestra el resumen.
+
+> **Importante:** abrí la pantalla de Puntos de Emisión y dejala **activa** antes de
+> ejecutar la carga. El addon escribe en la matriz del formulario activo.
 
 ---
 

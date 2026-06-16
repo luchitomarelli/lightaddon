@@ -1,6 +1,6 @@
-Codigo;Descripcion;NumeroEmision
-0001;Casa Central - Facturacion A;15
-0002;Casa Central - Facturacion B;48
-0003;Sucursal Norte - Facturacion A;7
-0004;Sucursal Sur - Facturacion B;102
-0005;Deposito - Remitos;3
+Codigo;Descripcion
+0001;Casa Central - Facturacion A
+0002;Casa Central - Facturacion B
+0003;Sucursal Norte - Facturacion A
+0004;Sucursal Sur - Facturacion B
+0005;Deposito - Remitos

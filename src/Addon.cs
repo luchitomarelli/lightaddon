@@ -151,32 +151,17 @@ namespace CargaMasivaPOI
                 if (boton != 1) // 1 = primer boton ("Si")
                     return;
 
-                // 4) Asegurar que existe la tabla/campo destino.
-                new UdtManager(_company).AsegurarEstructura();
+                // 4) Escribir los puntos en la MATRIZ de la pantalla de Puntos de Emision
+                //    (misma logica que el addon original: no inserta, escribe en la grilla).
+                var loader = new MatrizLoader(_app);
+                int escritas = loader.Cargar(puntos);
 
-                // 5) Grabar uno por uno.
-                var repo = new PuntoEmisionRepository(_company);
-                int ok = 0, fallidos = 0;
+                // 5) Resumen.
+                string resumen = "Se escribieron " + escritas + " puntos en la matriz de Puntos de Emision.";
                 foreach (PuntoEmision p in puntos)
-                {
-                    string error;
-                    if (repo.Guardar(p, out error))
-                    {
-                        ok++;
-                        logger.Escribir("OK   " + p);
-                    }
-                    else
-                    {
-                        fallidos++;
-                        logger.Escribir("FALLO " + p + " -> " + error);
-                    }
-                }
-
-                // 6) Resumen.
-                string resumen = "Carga terminada. Exitosos: " + ok + " | Fallidos: " + fallidos;
+                    logger.Escribir("ESCRITO " + p);
                 logger.Escribir("=== " + resumen + " ===");
-                _app.StatusBar.SetText(resumen, BoMessageTime.bmt_Long,
-                    fallidos == 0 ? BoStatusBarMessageType.smt_Success : BoStatusBarMessageType.smt_Warning);
+                _app.StatusBar.SetText(resumen, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success);
                 _app.MessageBox(resumen + "\n\nVer detalle en PuntosEmision_Log.txt");
             }
             catch (Exception ex)

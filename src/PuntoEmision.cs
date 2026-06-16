@@ -22,7 +22,10 @@ namespace CargaMasivaPOI
 
         public override string ToString()
         {
-            return Codigo + " - " + Descripcion + " (Nro emision: " + NumeroEmision + ")";
+            string texto = Codigo + " - " + Descripcion;
+            if (NumeroEmision > 0)
+                texto += " (Nro emision: " + NumeroEmision + ")";
+            return texto;
         }
     }
 }
