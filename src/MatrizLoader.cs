@@ -96,8 +96,25 @@ namespace CargaMasivaPOI
 
         private void SetCelda(Matrix matriz, string columna, int fila, string valor)
         {
-            var celda = (EditText)matriz.Columns.Item(columna).Cells.Item(fila).Specific;
-            celda.Value = valor;
+            // Una celda de matriz puede ser texto (EditText) o un desplegable (ComboBox).
+            // Detectamos el tipo y la cargamos de la forma correcta.
+            object specific = matriz.Columns.Item(columna).Cells.Item(fila).Specific;
+
+            var combo = specific as ComboBox;
+            if (combo != null)
+            {
+                // Columna desplegable (ej: Carta, Tipo de POI): seleccionar por valor.
+                combo.Select(valor, BoSearchKey.psk_ByValue);
+                return;
+            }
+
+            var edit = specific as EditText;
+            if (edit != null)
+            {
+                // Columna de texto (ej: Nombre, Codigo POI, numeros).
+                edit.Value = valor;
+                return;
+            }
         }
     }
 }
