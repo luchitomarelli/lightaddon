@@ -41,6 +41,38 @@ Son exactamente los que te pasaron:
 
 ---
 
+## Preparar el entorno con Visual Studio 2019 (paso a paso)
+
+### 1) Instalar Visual Studio 2019 Community
+- Descargalo de `visualstudio.microsoft.com` → sección **"Older downloads"** (necesitás
+  una cuenta Microsoft gratuita para bajar versiones anteriores).
+- En el **instalador (Workloads)**, tildá:
+  - **Desarrollo de escritorio de .NET** (incluye .NET Framework y WinForms).
+- En la pestaña **"Componentes individuales"**, asegurate de tener:
+  - **.NET Framework 4.8 SDK** y **.NET Framework 4.8 targeting pack**.
+
+### 2) Instalar el SAP Business One SDK
+- Está en el **DVD/instalador de SAP Business One 10**, carpeta `Packages\SDK` (o pedíselo
+  a tu consultor/partner de SAP). Instalá **"SAP Business One SDK"**.
+- Esto deja en tu máquina las DLLs `Interop.SAPbouiCOM.dll` e `Interop.SAPbobsCOM.dll`
+  (típicamente en `C:\Program Files (x86)\SAP\SAP Business One DI API\`).
+
+### 3) (Opcional) Complemento "SAP Business One Studio" para VS 2019
+- Sirve para el **diseñador visual de formularios `.b1f`** y para generar el `.ard`.
+- **Este proyecto NO lo necesita** (es solo código, sin formularios propios), pero si
+  vas a hacer addons con pantallas propias, instalalo: viene junto al SDK y se integra
+  con VS 2019.
+
+### 4) Abrir y configurar el proyecto
+1. Abrí `CargaMasivaPOI.sln` con VS 2019.
+2. Si las referencias `Interop.SAPbouiCOM` / `Interop.SAPbobsCOM` aparecen en rojo:
+   borralas → clic derecho en el proyecto → **Agregar referencia** → pestaña **COM** →
+   tildá **SAP Business One UI API** y **SAP Business One DI API**.
+3. Verificá que la **plataforma** sea **x86** (combo de arriba). Debe coincidir con el
+   *bitness* del cliente de SAP que uses.
+
+---
+
 ## Estructura del proyecto
 
 ```
