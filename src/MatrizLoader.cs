@@ -83,7 +83,12 @@ namespace CargaMasivaPOI
                 escritas++;
             }
 
-            // 4) Apretar "Agregar/Actualizar" para que SAP guarde todo.
+            // 4) Empujar lo escrito al origen de datos enlazado (OFNS).
+            //    Necesario en matrices enlazadas: sin esto SAP a veces no "ve"
+            //    los valores que cargamos por codigo.
+            matriz.FlushToDataSource();
+
+            // 5) Apretar "Agregar/Actualizar" para que SAP guarde todo.
             form.Items.Item(BotonOk).Click(BoCellClickType.ct_Regular);
 
             return escritas;
