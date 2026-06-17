@@ -24,7 +24,7 @@ namespace CargaMasivaPOI
         private const string MenuModulos = "43520";
 
         private readonly SboConnection _conexion;
-        private readonly Application _app;
+        private readonly SAPbouiCOM.Application _app;
         private readonly SAPbobsCOM.Company _company;
 
         public Addon(SboConnection conexion)
@@ -114,7 +114,7 @@ namespace CargaMasivaPOI
                 eventType == BoAppEventTypes.aet_CompanyChanged ||
                 eventType == BoAppEventTypes.aet_ServerTerminition)
             {
-                Application.Exit(); // cierra el bucle de mensajes de WinForms
+                System.Windows.Forms.Application.Exit(); // cierra el bucle de mensajes de WinForms
             }
         }
 
