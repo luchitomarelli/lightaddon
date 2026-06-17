@@ -5,34 +5,26 @@ using SAPbouiCOM;
 namespace CargaMasivaPOI
 {
     /// <summary>
-    /// Carga las series de numeracion escribiendo DIRECTO en el origen de datos
-    /// (DBDataSource "OFNS") que esta detras de la matriz, y despues refresca la
-    /// grilla. Es mas robusto que tipear celda por celda: evita el error
-    /// "Form item is not editable" y no deja filas placeholder.
+    /// Carga las series ESCRIBIENDO EN LAS CELDAS de la matriz (como tipear a mano).
+    /// La pantalla de Series de Numeracion es del sistema y NO permite escribir
+    /// directo en su origen de datos (da "The item is not a user-defined item"),
+    /// asi que vamos celda por celda.
     ///
-    /// Pantalla: Series de Numeracion (matriz Item "3", tabla OFNS).
-    /// Campos: Name, PTICode, Letter, FirstNum, LastNum (NextNum lo pone SAP).
+    /// Pantalla: Series de Numeracion (matriz Item "3").
+    /// Columnas: Name, PTICode, Letter (desplegable), FirstNum, LastNum.
+    /// NextNum NO se escribe: lo autocompleta SAP a partir de FirstNum.
     ///
-    /// IMPORTANTE: la pantalla tiene que estar ABIERTA y ACTIVA al ejecutar.
-    /// NO guarda solo: deja las filas cargadas para que las revises y guardes vos
-    /// (Ctrl+A / Actualizar). Cuando confirmes que esta todo bien, se puede activar
-    /// el guardado automatico (ver el final de Cargar()).
+    /// Es resistente: si una celda no se puede escribir, lo anota en el log y sigue.
+    /// NO guarda solo: deja las filas para que las revises y guardes vos (Ctrl+A).
     /// </summary>
     public class MatrizLoader
     {
-        private const string MatrizItem    = "3";      // Item de la matriz
-        private const string DataSourceOFNS = "OFNS";  // origen de datos enlazado
-
-        // Nombres de campo en OFNS (coinciden con "Informacion del sistema").
-        private const string FName     = "Name";
-        private const string FPtiCode  = "PTICode";
-        private const string FLetter   = "Letter";
-        private const string FFirstNum = "FirstNum";
-        private const string FLastNum  = "LastNum";
-        // NextNum no se escribe: SAP lo autocompleta desde FirstNum.
-
-        // Boton "Agregar/Actualizar" (por si se activa el guardado automatico).
-        private const string BotonOk = "1";
+        private const string MatrizItem  = "3";
+        private const string ColName     = "Name";
+        private const string ColPtiCode  = "PTICode";
+        private const string ColLetter   = "Letter";
+        private const string ColFirstNum = "FirstNum";
+        private const string ColLastNum  = "LastNum";
 
         private readonly Application _app;
         private readonly Logger _logger;
@@ -43,18 +35,12 @@ namespace CargaMasivaPOI
             _logger = logger;
         }
 
-        /// <summary>
-        /// Carga todas las series en la matriz del formulario activo.
-        /// Devuelve cuantas filas cargo.
-        /// </summary>
         public int Cargar(List<SerieNumeracion> series)
         {
-            // 1) Formulario activo.
             Form form = _app.Forms.ActiveForm;
             if (form == null)
                 throw new Exception("No hay ningun formulario activo. Abri la pantalla de Series de Numeracion.");
 
-            // 2) Matriz (para refrescar al final).
             Matrix matriz;
             try
             {
@@ -67,50 +53,53 @@ namespace CargaMasivaPOI
                     "Abri la pantalla de Series de Numeracion y dejala activa antes de cargar.");
             }
 
-            // 3) Origen de datos enlazado (OFNS).
-            DBDataSource dbs;
-            try
-            {
-                dbs = form.DataSources.DBDataSources.Item(DataSourceOFNS);
-            }
-            catch
-            {
-                throw new Exception(
-                    "No se encontro el origen de datos '" + DataSourceOFNS + "' en el formulario activo.");
-            }
-
-            // Primero pasamos lo que haya tipeado a mano al origen de datos.
-            matriz.FlushToDataSource();
-
-            // 4) Insertar cada serie como un registro nuevo al final del origen.
             int escritas = 0;
             foreach (SerieNumeracion s in series)
             {
-                int idx = dbs.Size;        // posicion del nuevo registro (al final)
-                dbs.InsertRecord(idx);     // inserta un registro vacio
-                dbs.Offset = idx;
+                matriz.AddRow();                 // agrega una fila vacia al final
+                int fila = matriz.RowCount;      // numero de la ultima fila
 
-                dbs.SetValue(FName,     idx, s.Name);
-                dbs.SetValue(FPtiCode,  idx, s.PTICode);
-                dbs.SetValue(FLetter,   idx, s.Letter);
-                dbs.SetValue(FFirstNum, idx, s.FirstNum.ToString());
-                // NextNum (Numero siguiente) lo completa SAP solo a partir de FirstNum:
-                // NO lo escribimos.
-                dbs.SetValue(FLastNum,  idx, s.LastNum.ToString());
+                SetCelda(matriz, ColName,     fila, s.Name);
+                SetCelda(matriz, ColPtiCode,  fila, s.PTICode);
+                SetCelda(matriz, ColLetter,   fila, s.Letter);
+                SetCelda(matriz, ColFirstNum, fila, s.FirstNum.ToString());
+                SetCelda(matriz, ColLastNum,  fila, s.LastNum.ToString());
 
                 escritas++;
-                _logger.Escribir("PREPARADO " + s);
+                _logger.Escribir("FILA " + fila + ": " + s);
             }
 
-            // 5) Refrescar la grilla para que muestre los registros nuevos.
-            matriz.LoadFromDataSource();
-
-            // 6) NO guardamos automaticamente: revisa las filas y guarda vos (Ctrl+A).
-            //    Cuando confirmes que carga bien, descomenta la linea de abajo para
-            //    que guarde solo:
-            // form.Items.Item(BotonOk).Click(BoCellClickType.ct_Regular);
-
+            // NO guarda solo: revisa las filas y guarda vos (Ctrl+A).
             return escritas;
+        }
+
+        private void SetCelda(Matrix matriz, string columna, int fila, string valor)
+        {
+            // Una celda puede ser texto (EditText) o desplegable (ComboBox).
+            // Si no se puede escribir, lo anotamos y seguimos (no cortamos todo).
+            try
+            {
+                object specific = matriz.Columns.Item(columna).Cells.Item(fila).Specific;
+
+                var combo = specific as ComboBox;
+                if (combo != null)
+                {
+                    combo.Select(valor, BoSearchKey.psk_ByValue);
+                    return;
+                }
+
+                var edit = specific as EditText;
+                if (edit != null)
+                {
+                    edit.Value = valor;
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Escribir("  AVISO: columna '" + columna + "' fila " + fila +
+                    " no se pudo cargar: " + ex.Message);
+            }
         }
     }
 }
