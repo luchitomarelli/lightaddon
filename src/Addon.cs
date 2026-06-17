@@ -128,10 +128,20 @@ namespace CargaMasivaPOI
 
             try
             {
-                // 1) Elegir el archivo CSV.
-                string rutaCsv = ElegirArchivoCsv(carpeta);
-                if (rutaCsv == null)
-                    return; // el usuario cancelo
+                // 1) Ruta fija del CSV (carpeta del addon + nombre del archivo).
+                //    NO usamos dialogos de Windows: un dialogo modal puede colgar
+                //    el cliente de SAP. Leemos directo, como el addon original.
+                string nombreCsv = ConfigurationManager.AppSettings["ArchivoCsv"];
+                if (string.IsNullOrWhiteSpace(nombreCsv))
+                    nombreCsv = "PuntosEmision.csv";
+                string rutaCsv = Path.Combine(carpeta, nombreCsv);
+
+                if (!File.Exists(rutaCsv))
+                {
+                    _app.MessageBox("No se encontro el archivo:\n" + rutaCsv +
+                        "\n\nColoque el CSV en esa carpeta y vuelva a ejecutar.");
+                    return;
+                }
 
                 // 2) Leer el CSV.
                 List<SerieNumeracion> series = CsvReader.Leer(rutaCsv);
@@ -184,23 +194,6 @@ namespace CargaMasivaPOI
                 carpeta = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             }
             return carpeta;
-        }
-
-        private static string ElegirArchivoCsv(string carpeta)
-        {
-            string nombreDefault = ConfigurationManager.AppSettings["ArchivoCsv"];
-            if (string.IsNullOrWhiteSpace(nombreDefault))
-                nombreDefault = "PuntosEmision.csv";
-
-            using (var dlg = new OpenFileDialog())
-            {
-                dlg.Title = "Elegi el CSV de puntos de emision";
-                dlg.Filter = "Archivos CSV (*.csv)|*.csv|Todos (*.*)|*.*";
-                dlg.InitialDirectory = carpeta;
-                dlg.FileName = nombreDefault;
-
-                return dlg.ShowDialog() == DialogResult.OK ? dlg.FileName : null;
-            }
         }
     }
 }
