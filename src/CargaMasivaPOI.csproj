@@ -71,7 +71,7 @@
     <Compile Include="Addon.cs" />
     <Compile Include="SboConnection.cs" />
     <Compile Include="MatrizLoader.cs" />
-    <Compile Include="PuntoEmision.cs" />
+    <Compile Include="SerieNumeracion.cs" />
     <Compile Include="CsvReader.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

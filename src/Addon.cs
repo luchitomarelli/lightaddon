@@ -119,7 +119,7 @@ namespace CargaMasivaPOI
         }
 
         // ---------------------------------------------------------------------
-        // LOGICA PRINCIPAL: leer CSV -> grabar puntos de emision
+        // LOGICA PRINCIPAL: leer CSV -> cargar series de numeracion
         // ---------------------------------------------------------------------
         private void EjecutarCarga()
         {
@@ -134,10 +134,10 @@ namespace CargaMasivaPOI
                     return; // el usuario cancelo
 
                 // 2) Leer el CSV.
-                List<PuntoEmision> puntos = CsvReader.Leer(rutaCsv);
-                logger.Escribir("=== Inicio carga. Archivo: " + rutaCsv + " (" + puntos.Count + " filas) ===");
+                List<SerieNumeracion> series = CsvReader.Leer(rutaCsv);
+                logger.Escribir("=== Inicio carga. Archivo: " + rutaCsv + " (" + series.Count + " filas) ===");
 
-                if (puntos.Count == 0)
+                if (series.Count == 0)
                 {
                     _app.StatusBar.SetText("El CSV no tiene filas para cargar.",
                         BoMessageTime.bmt_Short, BoStatusBarMessageType.smt_Warning);
@@ -146,20 +146,20 @@ namespace CargaMasivaPOI
 
                 // 3) Confirmar con el usuario (mensaje nativo de SAP con botones).
                 int boton = _app.MessageBox(
-                    "Se van a cargar " + puntos.Count + " puntos de emision. Continuar?",
+                    "Se van a cargar " + series.Count + " series de numeracion. Continuar?",
                     2, "Si", "No", "");
                 if (boton != 1) // 1 = primer boton ("Si")
                     return;
 
-                // 4) Escribir los puntos en la MATRIZ de la pantalla de Puntos de Emision
+                // 4) Escribir las series en la MATRIZ de la pantalla de Series de Numeracion
                 //    (misma logica que el addon original: no inserta, escribe en la grilla).
                 var loader = new MatrizLoader(_app);
-                int escritas = loader.Cargar(puntos);
+                int escritas = loader.Cargar(series);
 
                 // 5) Resumen.
-                string resumen = "Se escribieron " + escritas + " puntos en la matriz de Puntos de Emision.";
-                foreach (PuntoEmision p in puntos)
-                    logger.Escribir("ESCRITO " + p);
+                string resumen = "Se escribieron " + escritas + " series en la matriz.";
+                foreach (SerieNumeracion s in series)
+                    logger.Escribir("ESCRITO " + s);
                 logger.Escribir("=== " + resumen + " ===");
                 _app.StatusBar.SetText(resumen, BoMessageTime.bmt_Long, BoStatusBarMessageType.smt_Success);
                 _app.MessageBox(resumen + "\n\nVer detalle en PuntosEmision_Log.txt");

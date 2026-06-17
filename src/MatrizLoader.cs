@@ -5,24 +5,32 @@ using SAPbouiCOM;
 namespace CargaMasivaPOI
 {
     /// <summary>
-    /// Carga los puntos ESCRIBIENDO EN LA MATRIZ de la pantalla de Puntos de Emision,
+    /// Carga las series de numeracion ESCRIBIENDO EN LA MATRIZ de la pantalla,
     /// igual que hacia el addon original. NO inserta en la base directo: llena la
     /// grilla fila por fila (como si lo tipearas a mano) y deja que SAP guarde.
     ///
-    /// IDs reales de la pantalla (sacados con Ver > Informacion del sistema):
-    ///   - Formulario: 234000028   (tabla detras: OPTI)
-    ///   - Matriz:     Item "3"
-    ///   - Columnas:   "Code" (codigo) y "Desc" (descripcion)
+    /// Destino: tabla OFNS (Series de Numeracion).
+    /// Columnas de la matriz que escribimos:
+    ///   Name, PTICode, Letter, FirstNum, NextNum, LastNum
     ///
-    /// IMPORTANTE: la pantalla de Puntos de Emision tiene que estar ABIERTA y ACTIVA
-    /// cuando se ejecuta la carga.
+    /// IMPORTANTE:
+    ///  - La pantalla de Series de Numeracion tiene que estar ABIERTA y ACTIVA.
+    ///  - Verifica el UID de la matriz (MatrizItem) y de las columnas con
+    ///    "Ver > Informacion del sistema" (abajo a la izquierda te muestra
+    ///    Form / Item / Column). Si en tu pantalla difieren, ajustalos aca.
     /// </summary>
     public class MatrizLoader
     {
-        private const string MatrizItem = "3";       // Item de la matriz
-        private const string ColCodigo  = "Code";    // columna Codigo
-        private const string ColDescrip = "Desc";    // columna Descripcion
-        // private const string ColNroEmis = "????"; // <-- columna del numero de emision (falta el UID)
+        // ---- IDs de la pantalla (AJUSTAR si tu Informacion del sistema dice otra cosa) ----
+        private const string MatrizItem = "3";   // Item de la matriz
+
+        // UIDs de las columnas (suelen coincidir con el nombre del campo de OFNS)
+        private const string ColName     = "Name";
+        private const string ColPtiCode  = "PTICode";
+        private const string ColLetter   = "Letter";
+        private const string ColFirstNum = "FirstNum";
+        private const string ColNextNum  = "NextNum";
+        private const string ColLastNum  = "LastNum";
 
         // Boton "Agregar/Actualizar" del formulario (equivale a Ctrl+A).
         private const string BotonOk = "1";
@@ -35,17 +43,17 @@ namespace CargaMasivaPOI
         }
 
         /// <summary>
-        /// Escribe todos los puntos en la matriz del formulario activo.
+        /// Escribe todas las series en la matriz del formulario activo.
         /// Devuelve cuantas filas escribio.
         /// </summary>
-        public int Cargar(List<PuntoEmision> puntos)
+        public int Cargar(List<SerieNumeracion> series)
         {
             // 1) Agarrar el formulario que esta abierto y activo.
             Form form = _app.Forms.ActiveForm;
             if (form == null)
-                throw new Exception("No hay ningun formulario activo. Abri la pantalla de Puntos de Emision.");
+                throw new Exception("No hay ningun formulario activo. Abri la pantalla de Series de Numeracion.");
 
-            // 2) Obtener la matriz (Item 3). Si falla, es que no es la pantalla correcta.
+            // 2) Obtener la matriz. Si falla, es que no es la pantalla correcta.
             Matrix matriz;
             try
             {
@@ -54,22 +62,23 @@ namespace CargaMasivaPOI
             catch
             {
                 throw new Exception(
-                    "No se encontro la matriz en el formulario activo.\n" +
-                    "Abri la pantalla de Puntos de Emision y dejala activa antes de cargar.");
+                    "No se encontro la matriz (Item " + MatrizItem + ") en el formulario activo.\n" +
+                    "Abri la pantalla de Series de Numeracion y dejala activa antes de cargar.");
             }
 
-            // 3) Escribir cada punto en una fila nueva.
+            // 3) Escribir cada serie en una fila nueva.
             int escritas = 0;
-            foreach (PuntoEmision p in puntos)
+            foreach (SerieNumeracion s in series)
             {
                 matriz.AddRow();                 // agrega una fila vacia al final
                 int fila = matriz.RowCount;      // numero de la ultima fila
 
-                SetCelda(matriz, ColCodigo,  fila, p.Codigo);
-                SetCelda(matriz, ColDescrip, fila, p.Descripcion);
-
-                // Cuando tengas el UID de la columna del numero de emision, descomenta:
-                // SetCelda(matriz, ColNroEmis, fila, p.NumeroEmision.ToString());
+                SetCelda(matriz, ColName,     fila, s.Name);
+                SetCelda(matriz, ColPtiCode,  fila, s.PTICode);
+                SetCelda(matriz, ColLetter,   fila, s.Letter);
+                SetCelda(matriz, ColFirstNum, fila, s.FirstNum.ToString());
+                SetCelda(matriz, ColNextNum,  fila, s.NextNum.ToString());
+                SetCelda(matriz, ColLastNum,  fila, s.LastNum.ToString());
 
                 escritas++;
             }

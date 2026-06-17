@@ -6,14 +6,13 @@ using System.IO;
 namespace CargaMasivaPOI
 {
     /// <summary>
-    /// Lee el archivo CSV y lo convierte en una lista de PuntoEmision.
+    /// Lee el archivo CSV y lo convierte en una lista de SerieNumeracion.
     ///
-    /// Formato esperado (separado por ";", con encabezado en la primer linea).
-    /// La 3er columna (NumeroEmision) es OPCIONAL:
+    /// Formato esperado (separado por ";", con encabezado en la primer linea):
     ///
-    ///     Codigo;Descripcion
-    ///     0001;Casa Central - Facturacion A
-    ///     0002;Sucursal Norte - Facturacion B
+    ///     Name;PTICode;Letter;FirstNum;NextNum;LastNum
+    ///     Ventas A 0001;0001;A;1;1;99999999
+    ///     Ventas B 0001;0001;B;1;1;99999999
     ///
     /// Es C# puro: nada de SDK de SAP aca. Por eso esta parte es la mas facil.
     /// </summary>
@@ -21,12 +20,12 @@ namespace CargaMasivaPOI
     {
         private const char Separador = ';';
 
-        public static List<PuntoEmision> Leer(string rutaArchivo)
+        public static List<SerieNumeracion> Leer(string rutaArchivo)
         {
             if (!File.Exists(rutaArchivo))
                 throw new FileNotFoundException("No se encontro el archivo CSV: " + rutaArchivo);
 
-            var resultado = new List<PuntoEmision>();
+            var resultado = new List<SerieNumeracion>();
             string[] lineas = File.ReadAllLines(rutaArchivo);
 
             // Arrancamos en i = 1 para saltar la fila de encabezados.
@@ -37,30 +36,35 @@ namespace CargaMasivaPOI
                     continue; // saltar lineas vacias
 
                 string[] campos = linea.Split(Separador);
-                if (campos.Length < 2)
+                if (campos.Length < 6)
                     throw new FormatException(
-                        "La linea " + (i + 1) + " no tiene al menos 2 columnas (Codigo;Descripcion): " + linea);
+                        "La linea " + (i + 1) + " no tiene las 6 columnas esperadas " +
+                        "(Name;PTICode;Letter;FirstNum;NextNum;LastNum): " + linea);
 
-                var punto = new PuntoEmision
+                var serie = new SerieNumeracion
                 {
-                    Codigo = campos[0].Trim(),
-                    Descripcion = campos[1].Trim()
+                    Name    = campos[0].Trim(),
+                    PTICode = campos[1].Trim(),
+                    Letter  = campos[2].Trim(),
+                    FirstNum = ParseNum(campos[3], i + 1, "FirstNum"),
+                    NextNum  = ParseNum(campos[4], i + 1, "NextNum"),
+                    LastNum  = ParseNum(campos[5], i + 1, "LastNum")
                 };
 
-                // 3er columna (numero de emision) es opcional.
-                if (campos.Length >= 3 && campos[2].Trim().Length > 0)
-                {
-                    int numero;
-                    if (!int.TryParse(campos[2].Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out numero))
-                        throw new FormatException(
-                            "El numero de emision de la linea " + (i + 1) + " no es valido: '" + campos[2] + "'");
-                    punto.NumeroEmision = numero;
-                }
-
-                resultado.Add(punto);
+                resultado.Add(serie);
             }
 
             return resultado;
+        }
+
+        private static int ParseNum(string valor, int nroLinea, string columna)
+        {
+            int numero;
+            if (!int.TryParse(valor.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out numero))
+                throw new FormatException(
+                    "El valor de '" + columna + "' en la linea " + nroLinea +
+                    " no es un numero valido: '" + valor + "'");
+            return numero;
         }
     }
 }
