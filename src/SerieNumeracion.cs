@@ -18,16 +18,13 @@ namespace CargaMasivaPOI
         /// <summary>Primer numero de la serie (campo FirstNum).</summary>
         public int FirstNum { get; set; }
 
-        /// <summary>Proximo numero a usar (campo NextNum).</summary>
-        public int NextNum { get; set; }
-
         /// <summary>Ultimo numero de la serie (campo LastNum).</summary>
         public int LastNum { get; set; }
 
         public override string ToString()
         {
             return Name + " (PTI " + PTICode + ", Letra " + Letter +
-                   ", " + FirstNum + "/" + NextNum + "/" + LastNum + ")";
+                   ", " + FirstNum + " a " + LastNum + ")";
         }
     }
 }

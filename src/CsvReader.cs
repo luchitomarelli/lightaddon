@@ -8,11 +8,12 @@ namespace CargaMasivaPOI
     /// <summary>
     /// Lee el archivo CSV y lo convierte en una lista de SerieNumeracion.
     ///
-    /// Formato esperado (separado por ";", con encabezado en la primer linea):
+    /// Formato esperado (separado por ";", con encabezado en la primer linea).
+    /// NextNum NO va: SAP lo autocompleta a partir de FirstNum.
     ///
-    ///     Name;PTICode;Letter;FirstNum;NextNum;LastNum
-    ///     Ventas A 0001;0001;A;1;1;99999999
-    ///     Ventas B 0001;0001;B;1;1;99999999
+    ///     Name;PTICode;Letter;FirstNum;LastNum
+    ///     Ventas A 0001;0001;A;1;99999999
+    ///     Ventas B 0001;0001;B;1;99999999
     ///
     /// Es C# puro: nada de SDK de SAP aca. Por eso esta parte es la mas facil.
     /// </summary>
@@ -36,10 +37,10 @@ namespace CargaMasivaPOI
                     continue; // saltar lineas vacias
 
                 string[] campos = linea.Split(Separador);
-                if (campos.Length < 6)
+                if (campos.Length < 5)
                     throw new FormatException(
-                        "La linea " + (i + 1) + " no tiene las 6 columnas esperadas " +
-                        "(Name;PTICode;Letter;FirstNum;NextNum;LastNum): " + linea);
+                        "La linea " + (i + 1) + " no tiene las 5 columnas esperadas " +
+                        "(Name;PTICode;Letter;FirstNum;LastNum): " + linea);
 
                 var serie = new SerieNumeracion
                 {
@@ -47,8 +48,7 @@ namespace CargaMasivaPOI
                     PTICode = campos[1].Trim(),
                     Letter  = campos[2].Trim(),
                     FirstNum = ParseNum(campos[3], i + 1, "FirstNum"),
-                    NextNum  = ParseNum(campos[4], i + 1, "NextNum"),
-                    LastNum  = ParseNum(campos[5], i + 1, "LastNum")
+                    LastNum  = ParseNum(campos[4], i + 1, "LastNum")
                 };
 
                 resultado.Add(serie);

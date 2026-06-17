@@ -11,7 +11,7 @@ namespace CargaMasivaPOI
     /// "Form item is not editable" y no deja filas placeholder.
     ///
     /// Pantalla: Series de Numeracion (matriz Item "3", tabla OFNS).
-    /// Campos: Name, PTICode, Letter, FirstNum, NextNum, LastNum.
+    /// Campos: Name, PTICode, Letter, FirstNum, LastNum (NextNum lo pone SAP).
     ///
     /// IMPORTANTE: la pantalla tiene que estar ABIERTA y ACTIVA al ejecutar.
     /// NO guarda solo: deja las filas cargadas para que las revises y guardes vos
@@ -28,8 +28,8 @@ namespace CargaMasivaPOI
         private const string FPtiCode  = "PTICode";
         private const string FLetter   = "Letter";
         private const string FFirstNum = "FirstNum";
-        private const string FNextNum  = "NextNum";
         private const string FLastNum  = "LastNum";
+        // NextNum no se escribe: SAP lo autocompleta desde FirstNum.
 
         // Boton "Agregar/Actualizar" (por si se activa el guardado automatico).
         private const string BotonOk = "1";
