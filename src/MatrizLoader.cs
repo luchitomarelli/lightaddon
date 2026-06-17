@@ -94,7 +94,8 @@ namespace CargaMasivaPOI
                 dbs.SetValue(FPtiCode,  idx, s.PTICode);
                 dbs.SetValue(FLetter,   idx, s.Letter);
                 dbs.SetValue(FFirstNum, idx, s.FirstNum.ToString());
-                dbs.SetValue(FNextNum,  idx, s.NextNum.ToString());
+                // NextNum (Numero siguiente) lo completa SAP solo a partir de FirstNum:
+                // NO lo escribimos.
                 dbs.SetValue(FLastNum,  idx, s.LastNum.ToString());
 
                 escritas++;
