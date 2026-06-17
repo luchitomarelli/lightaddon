@@ -5,55 +5,56 @@ using SAPbouiCOM;
 namespace CargaMasivaPOI
 {
     /// <summary>
-    /// Carga las series de numeracion ESCRIBIENDO EN LA MATRIZ de la pantalla,
-    /// igual que hacia el addon original. NO inserta en la base directo: llena la
-    /// grilla fila por fila (como si lo tipearas a mano) y deja que SAP guarde.
+    /// Carga las series de numeracion escribiendo DIRECTO en el origen de datos
+    /// (DBDataSource "OFNS") que esta detras de la matriz, y despues refresca la
+    /// grilla. Es mas robusto que tipear celda por celda: evita el error
+    /// "Form item is not editable" y no deja filas placeholder.
     ///
-    /// Destino: tabla OFNS (Series de Numeracion).
-    /// Columnas de la matriz que escribimos:
-    ///   Name, PTICode, Letter, FirstNum, NextNum, LastNum
+    /// Pantalla: Series de Numeracion (matriz Item "3", tabla OFNS).
+    /// Campos: Name, PTICode, Letter, FirstNum, NextNum, LastNum.
     ///
-    /// IMPORTANTE:
-    ///  - La pantalla de Series de Numeracion tiene que estar ABIERTA y ACTIVA.
-    ///  - Verifica el UID de la matriz (MatrizItem) y de las columnas con
-    ///    "Ver > Informacion del sistema" (abajo a la izquierda te muestra
-    ///    Form / Item / Column). Si en tu pantalla difieren, ajustalos aca.
+    /// IMPORTANTE: la pantalla tiene que estar ABIERTA y ACTIVA al ejecutar.
+    /// NO guarda solo: deja las filas cargadas para que las revises y guardes vos
+    /// (Ctrl+A / Actualizar). Cuando confirmes que esta todo bien, se puede activar
+    /// el guardado automatico (ver el final de Cargar()).
     /// </summary>
     public class MatrizLoader
     {
-        // ---- IDs de la pantalla (AJUSTAR si tu Informacion del sistema dice otra cosa) ----
-        private const string MatrizItem = "3";   // Item de la matriz
+        private const string MatrizItem    = "3";      // Item de la matriz
+        private const string DataSourceOFNS = "OFNS";  // origen de datos enlazado
 
-        // UIDs de las columnas (suelen coincidir con el nombre del campo de OFNS)
-        private const string ColName     = "Name";
-        private const string ColPtiCode  = "PTICode";
-        private const string ColLetter   = "Letter";
-        private const string ColFirstNum = "FirstNum";
-        private const string ColNextNum  = "NextNum";
-        private const string ColLastNum  = "LastNum";
+        // Nombres de campo en OFNS (coinciden con "Informacion del sistema").
+        private const string FName     = "Name";
+        private const string FPtiCode  = "PTICode";
+        private const string FLetter   = "Letter";
+        private const string FFirstNum = "FirstNum";
+        private const string FNextNum  = "NextNum";
+        private const string FLastNum  = "LastNum";
 
-        // Boton "Agregar/Actualizar" del formulario (equivale a Ctrl+A).
+        // Boton "Agregar/Actualizar" (por si se activa el guardado automatico).
         private const string BotonOk = "1";
 
         private readonly Application _app;
+        private readonly Logger _logger;
 
-        public MatrizLoader(Application app)
+        public MatrizLoader(Application app, Logger logger)
         {
             _app = app;
+            _logger = logger;
         }
 
         /// <summary>
-        /// Escribe todas las series en la matriz del formulario activo.
-        /// Devuelve cuantas filas escribio.
+        /// Carga todas las series en la matriz del formulario activo.
+        /// Devuelve cuantas filas cargo.
         /// </summary>
         public int Cargar(List<SerieNumeracion> series)
         {
-            // 1) Agarrar el formulario que esta abierto y activo.
+            // 1) Formulario activo.
             Form form = _app.Forms.ActiveForm;
             if (form == null)
                 throw new Exception("No hay ningun formulario activo. Abri la pantalla de Series de Numeracion.");
 
-            // 2) Obtener la matriz. Si falla, es que no es la pantalla correcta.
+            // 2) Matriz (para refrescar al final).
             Matrix matriz;
             try
             {
@@ -66,55 +67,49 @@ namespace CargaMasivaPOI
                     "Abri la pantalla de Series de Numeracion y dejala activa antes de cargar.");
             }
 
-            // 3) Escribir cada serie en una fila nueva.
+            // 3) Origen de datos enlazado (OFNS).
+            DBDataSource dbs;
+            try
+            {
+                dbs = form.DataSources.DBDataSources.Item(DataSourceOFNS);
+            }
+            catch
+            {
+                throw new Exception(
+                    "No se encontro el origen de datos '" + DataSourceOFNS + "' en el formulario activo.");
+            }
+
+            // Primero pasamos lo que haya tipeado a mano al origen de datos.
+            matriz.FlushToDataSource();
+
+            // 4) Insertar cada serie como un registro nuevo al final del origen.
             int escritas = 0;
             foreach (SerieNumeracion s in series)
             {
-                matriz.AddRow();                 // agrega una fila vacia al final
-                int fila = matriz.RowCount;      // numero de la ultima fila
+                int idx = dbs.Size;        // posicion del nuevo registro (al final)
+                dbs.InsertRecord(idx);     // inserta un registro vacio
+                dbs.Offset = idx;
 
-                SetCelda(matriz, ColName,     fila, s.Name);
-                SetCelda(matriz, ColPtiCode,  fila, s.PTICode);
-                SetCelda(matriz, ColLetter,   fila, s.Letter);
-                SetCelda(matriz, ColFirstNum, fila, s.FirstNum.ToString());
-                SetCelda(matriz, ColNextNum,  fila, s.NextNum.ToString());
-                SetCelda(matriz, ColLastNum,  fila, s.LastNum.ToString());
+                dbs.SetValue(FName,     idx, s.Name);
+                dbs.SetValue(FPtiCode,  idx, s.PTICode);
+                dbs.SetValue(FLetter,   idx, s.Letter);
+                dbs.SetValue(FFirstNum, idx, s.FirstNum.ToString());
+                dbs.SetValue(FNextNum,  idx, s.NextNum.ToString());
+                dbs.SetValue(FLastNum,  idx, s.LastNum.ToString());
 
                 escritas++;
+                _logger.Escribir("PREPARADO " + s);
             }
 
-            // 4) Empujar lo escrito al origen de datos enlazado (OFNS).
-            //    Necesario en matrices enlazadas: sin esto SAP a veces no "ve"
-            //    los valores que cargamos por codigo.
-            matriz.FlushToDataSource();
+            // 5) Refrescar la grilla para que muestre los registros nuevos.
+            matriz.LoadFromDataSource();
 
-            // 5) Apretar "Agregar/Actualizar" para que SAP guarde todo.
-            form.Items.Item(BotonOk).Click(BoCellClickType.ct_Regular);
+            // 6) NO guardamos automaticamente: revisa las filas y guarda vos (Ctrl+A).
+            //    Cuando confirmes que carga bien, descomenta la linea de abajo para
+            //    que guarde solo:
+            // form.Items.Item(BotonOk).Click(BoCellClickType.ct_Regular);
 
             return escritas;
-        }
-
-        private void SetCelda(Matrix matriz, string columna, int fila, string valor)
-        {
-            // Una celda de matriz puede ser texto (EditText) o un desplegable (ComboBox).
-            // Detectamos el tipo y la cargamos de la forma correcta.
-            object specific = matriz.Columns.Item(columna).Cells.Item(fila).Specific;
-
-            var combo = specific as ComboBox;
-            if (combo != null)
-            {
-                // Columna desplegable (ej: Carta, Tipo de POI): seleccionar por valor.
-                combo.Select(valor, BoSearchKey.psk_ByValue);
-                return;
-            }
-
-            var edit = specific as EditText;
-            if (edit != null)
-            {
-                // Columna de texto (ej: Nombre, Codigo POI, numeros).
-                edit.Value = valor;
-                return;
-            }
         }
     }
 }

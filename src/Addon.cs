@@ -163,11 +163,11 @@ namespace CargaMasivaPOI
 
                 // 4) Escribir las series en la MATRIZ de la pantalla de Series de Numeracion
                 //    (misma logica que el addon original: no inserta, escribe en la grilla).
-                var loader = new MatrizLoader(_app);
+                var loader = new MatrizLoader(_app, logger);
                 int escritas = loader.Cargar(series);
 
                 // 5) Resumen.
-                string resumen = "Se escribieron " + escritas + " series en la matriz.";
+                string resumen = "Se cargaron " + escritas + " series. Revisa la grilla y guarda (Ctrl+A).";
                 foreach (SerieNumeracion s in series)
                     logger.Escribir("ESCRITO " + s);
                 logger.Escribir("=== " + resumen + " ===");
