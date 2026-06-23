@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 
 namespace CargaMasivaPOI
@@ -8,12 +7,11 @@ namespace CargaMasivaPOI
     /// <summary>
     /// Lee el archivo CSV y lo convierte en una lista de SerieNumeracion.
     ///
-    /// Formato esperado (separado por ";", con encabezado en la primer linea).
-    /// NextNum NO va: SAP lo autocompleta a partir de FirstNum.
+    /// Formato (separado por ";", con encabezado). FirstNum y LastNum son OPCIONALES:
+    /// si no los necesitas, podes dejarlos vacios o directamente no ponerlos.
     ///
-    ///     Name;PTICode;Letter;FirstNum;LastNum
-    ///     Ventas A 0001;0001;A;1;99999999
-    ///     Ventas B 0001;0001;B;1;99999999
+    ///     Name;PTICode;Letter;FirstNum;LastNum   (5 columnas, completo)
+    ///     Name;PTICode;Letter                    (3 columnas, sin numeracion)
     ///
     /// Es C# puro: nada de SDK de SAP aca. Por eso esta parte es la mas facil.
     /// </summary>
@@ -37,34 +35,22 @@ namespace CargaMasivaPOI
                     continue; // saltar lineas vacias
 
                 string[] campos = linea.Split(Separador);
-                if (campos.Length < 5)
+                if (campos.Length < 3)
                     throw new FormatException(
-                        "La linea " + (i + 1) + " no tiene las 5 columnas esperadas " +
-                        "(Name;PTICode;Letter;FirstNum;LastNum): " + linea);
+                        "La linea " + (i + 1) + " necesita al menos 3 columnas " +
+                        "(Name;PTICode;Letter): " + linea);
 
-                var serie = new SerieNumeracion
+                resultado.Add(new SerieNumeracion
                 {
-                    Name    = campos[0].Trim(),
-                    PTICode = campos[1].Trim(),
-                    Letter  = campos[2].Trim(),
-                    FirstNum = ParseNum(campos[3], i + 1, "FirstNum"),
-                    LastNum  = ParseNum(campos[4], i + 1, "LastNum")
-                };
-
-                resultado.Add(serie);
+                    Name     = campos[0].Trim(),
+                    PTICode  = campos[1].Trim(),
+                    Letter   = campos[2].Trim(),
+                    FirstNum = campos.Length > 3 ? campos[3].Trim() : "",   // opcional
+                    LastNum  = campos.Length > 4 ? campos[4].Trim() : ""    // opcional
+                });
             }
 
             return resultado;
-        }
-
-        private static int ParseNum(string valor, int nroLinea, string columna)
-        {
-            int numero;
-            if (!int.TryParse(valor.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out numero))
-                throw new FormatException(
-                    "El valor de '" + columna + "' en la linea " + nroLinea +
-                    " no es un numero valido: '" + valor + "'");
-            return numero;
         }
     }
 }

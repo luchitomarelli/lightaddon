@@ -15,11 +15,11 @@ namespace CargaMasivaPOI
         /// <summary>Letra de la serie: A, B, C... (campo Letter).</summary>
         public string Letter { get; set; }
 
-        /// <summary>Primer numero de la serie (campo FirstNum).</summary>
-        public int FirstNum { get; set; }
+        /// <summary>Primer numero de la serie (campo FirstNum). Opcional: puede ir vacio.</summary>
+        public string FirstNum { get; set; }
 
-        /// <summary>Ultimo numero de la serie (campo LastNum).</summary>
-        public int LastNum { get; set; }
+        /// <summary>Ultimo numero de la serie (campo LastNum). Opcional: puede ir vacio.</summary>
+        public string LastNum { get; set; }
 
         public override string ToString()
         {

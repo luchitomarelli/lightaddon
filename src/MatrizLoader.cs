@@ -62,8 +62,11 @@ namespace CargaMasivaPOI
                 SetCelda(matriz, ColName,     fila, s.Name);
                 SetCelda(matriz, ColPtiCode,  fila, s.PTICode);
                 SetCelda(matriz, ColLetter,   fila, s.Letter);
-                SetCelda(matriz, ColFirstNum, fila, s.FirstNum.ToString());
-                SetCelda(matriz, ColLastNum,  fila, s.LastNum.ToString());
+                // FirstNum/LastNum son opcionales: solo los escribimos si vienen con valor.
+                if (!string.IsNullOrEmpty(s.FirstNum))
+                    SetCelda(matriz, ColFirstNum, fila, s.FirstNum);
+                if (!string.IsNullOrEmpty(s.LastNum))
+                    SetCelda(matriz, ColLastNum,  fila, s.LastNum);
 
                 escritas++;
                 _logger.Escribir("FILA " + fila + ": " + s);
